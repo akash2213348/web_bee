@@ -3,16 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Workshop;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Date;
-
+use Carbon\Carbon;
 class EventsController extends BaseController
 {
-    public function getWarmupEvents() {
-        return Event::all();
+    public function getWarmupEvents($futureEventOrNot=0) {
+        // return Event::all(); 
+        $data = Event::all();
+        $returnVariable=[];
+        foreach($data as $datas){
+            $dataVariable['id']=$datas->id;
+            $dataVariable['name']=$datas->name;
+            $dataVariable['created_at']=$datas->created_at;
+            $dataVariable['updated_at']=$datas->updated_at;
+            if($futureEventOrNot==1){
+                $dataVariable['workshops']=Workshop::where('event_id',$datas->id)->where('end', '>', Carbon::now()->toDateTimeString())->get();
+            }
+            else{
+                $dataVariable['workshops']=Workshop::where('event_id',$datas->id)->get();
+            }
+           if(count($dataVariable['workshops'])>0){
+            array_push($returnVariable,$dataVariable);
+           }
+        }
+        return $returnVariable;
     }
 
     /*
@@ -101,7 +120,12 @@ class EventsController extends BaseController
      */
 
     public function getEventsWithWorkshops() {
-        throw new \Exception('implement in coding task 1');
+        try{
+            return $this->getWarmupEvents();
+        }
+        catch (\Exception $e) {
+            return $e->getMessage();
+        }
     }
 
 
@@ -180,6 +204,11 @@ class EventsController extends BaseController
      */
 
     public function getFutureEventsWithWorkshops() {
-        throw new \Exception('implement in coding task 2');
+        try{
+            return $this->getWarmupEvents(1);
+        }
+        catch (\Exception $e) {
+            return $e->getMessage();
+        }
     }
 }
